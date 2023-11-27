@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-flaskapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-flaskapp
+  template:
+    metadata:
+      labels:
+        app: todo-flaskapp
+    spec:
+      containers:
+        - name: todo-flaskapp
+          image: smrithi23/todo-app:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MONGO_URL
+              value: mongodb://mongo:27017/todoapp
+            - name: MONGO_HOST
+              value: mongo
+            - name: MONGO_PORT
+              value: '27017'
+            - name: FLASK_ENV
+              value: development
+            - name: PORT
+              value: '5000'
+          imagePullPolicy: Always

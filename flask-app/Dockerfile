@@ -1,4 +1,4 @@
-# Instructions compied from - https://hub.docker.com/_/python/
+# Instructions copied from - https://hub.docker.com/_/python/
 FROM python:3
 
 WORKDIR /usr/src/app

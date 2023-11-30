@@ -1,4 +1,4 @@
-from flask import Flask, render_template,request,redirect,url_for # For flask implementation
+from flask import Flask, render_template, request, redirect, url_for, jsonify  # For flask implementation
 from pymongo import MongoClient # Database connector
 from bson.objectid import ObjectId # For ObjectId to work
 from bson.errors import InvalidId # For catching InvalidId exception for ObjectId
@@ -17,6 +17,7 @@ db = client.todoapp    # Select the database
 todos = db.todo # Select the collection
 
 app = Flask(__name__)
+app_crashed = False
 
 print("initialised app")
 title = "TODO with Flask"
@@ -128,6 +129,26 @@ def search():
 @app.route("/about")
 def about():
 	return render_template('credits.html',t=title,h=heading)
+
+@app.route('/health')
+def health():
+    if app_crashed:
+        return jsonify(status='Error'), 500
+    else:
+        return jsonify(status='OK'), 200
+
+@app.route('/live')
+def live():
+    if app_crashed:
+        return jsonify(status='Error'), 500
+    else:
+        return jsonify(status='OK'), 200
+
+@app.route('/crash')
+def crash():
+    global app_crashed
+    app_crashed = True
+    return jsonify(status='Error'), 500
 
 if __name__ == "__main__":
 	env = os.environ.get('FLASK_ENV', 'development')

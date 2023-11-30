@@ -19,9 +19,21 @@ spec:
     spec:
       containers:
         - name: todo-flaskapp
-          image: smrithi23/todo-app:latest
+          image: smrithi23/todo-app:probe
           ports:
             - containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 0
+            periodSeconds: 5
           env:
             - name: MONGO_URL
               value: mongodb://mongo:27017/todoapp

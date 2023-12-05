@@ -3,6 +3,7 @@ from pymongo import MongoClient # Database connector
 from bson.objectid import ObjectId # For ObjectId to work
 from bson.errors import InvalidId # For catching InvalidId exception for ObjectId
 import os
+from prometheus_flask_exporter import PrometheusMetrics
 
 mongodb_host = os.environ.get('MONGO_HOST', '127.0.0.1')
 mongodb_port = int(os.environ.get('MONGO_PORT', '27017'))
@@ -17,6 +18,9 @@ db = client.todoapp    # Select the database
 todos = db.todo # Select the collection
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+metrics.info('app_info', 'Application info', version='1.0.3')
+
 app_crashed = False
 
 print("initialised app")
@@ -29,6 +33,7 @@ def redirect_url():
 		url_for('index')
 
 @app.route("/list")
+@metrics.do_not_track()
 def lists ():
 	#Display the all Tasks
 	todos_l = todos.find()
@@ -37,6 +42,7 @@ def lists ():
 
 @app.route("/")
 @app.route("/uncompleted")
+@metrics.do_not_track()
 def tasks ():
 	#Display the Uncompleted Tasks
 	print("**** inside /")
@@ -48,6 +54,7 @@ def tasks ():
 
 
 @app.route("/completed")
+@metrics.do_not_track()
 def completed ():
 	#Display the Completed Tasks
 	todos_l = todos.find({"done":"yes"})
@@ -55,6 +62,7 @@ def completed ():
 	return render_template('index.html',a3=a3,todos=todos_l,t=title,h=heading)
 
 @app.route("/done")
+@metrics.do_not_track()
 def done ():
 	#Done-or-not ICON
 	id=request.values.get("_id")
@@ -75,6 +83,7 @@ def done ():
 #	return render_template('add.html',h=heading,t=title)
 
 @app.route("/action", methods=['POST'])
+@metrics.do_not_track()
 def action ():
 	#Adding a Task
 	name=request.values.get("name")
@@ -85,6 +94,7 @@ def action ():
 	return redirect("/list")
 
 @app.route("/remove")
+@metrics.do_not_track()
 def remove ():
 	#Deleting a Task with various references
 	key=request.values.get("_id")
@@ -92,12 +102,14 @@ def remove ():
 	return redirect("/")
 
 @app.route("/update")
+@metrics.do_not_track()
 def update ():
 	id=request.values.get("_id")
 	task=todos.find({"_id":ObjectId(id)})
 	return render_template('update.html',tasks=task,h=heading,t=title)
 
 @app.route("/action3", methods=['POST'])
+@metrics.do_not_track()
 def action3 ():
 	#Updating a Task with various references
 	name=request.values.get("name")
@@ -109,6 +121,7 @@ def action3 ():
 	return redirect("/")
 
 @app.route("/search", methods=['GET'])
+@metrics.do_not_track()
 def search():
 	#Searching a Task with various references
 
@@ -127,10 +140,12 @@ def search():
 	return render_template('searchlist.html',todos=todos_l,t=title,h=heading)
 
 @app.route("/about")
+@metrics.do_not_track()
 def about():
 	return render_template('credits.html',t=title,h=heading)
 
 @app.route('/health')
+@metrics.do_not_track()
 def health():
     if app_crashed:
         return jsonify(status='Error'), 500
@@ -138,6 +153,7 @@ def health():
         return jsonify(status='OK'), 200
 
 @app.route('/live')
+@metrics.do_not_track()
 def live():
     if app_crashed:
         return jsonify(status='Error'), 500
@@ -145,13 +161,22 @@ def live():
         return jsonify(status='OK'), 200
 
 @app.route('/crash')
+@metrics.do_not_track()
 def crash():
     global app_crashed
     app_crashed = True
     return jsonify(status='Error'), 500
 
+# register additional default metrics
+metrics.register_default(
+    metrics.counter(
+        'by_path_counter', 'Request count by request paths',
+        labels={'path': lambda: request.path}
+    )
+)
+
 if __name__ == "__main__":
-	env = os.environ.get('FLASK_ENV', 'development')
+	env = os.environ.get('FLASK_ENV', 'production')
 	port = int(os.environ.get('PORT', 5000))
 	debug = False if env == 'production' else True
 	print("running app")

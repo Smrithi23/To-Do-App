@@ -17,5 +17,5 @@ data:
     receivers:
     - name: slack_demo
       slack_configs:
-      - api_url: https://hooks.slack.com/services/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
+      - api_url: <slack_url>
         channel: '#prometheus'  

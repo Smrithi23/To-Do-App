@@ -25,7 +25,7 @@ data:
         expr: sum by(pod)( kube_pod_info{created_by_kind!="Job"} AND ON (pod, namespace) kube_pod_status_ready{condition="false"} == 1) > 0
         for: 1s
         labels:
-          severity: warning
+          severity: slack
     - name: AllInstances
       rules:
       - alert: InstanceDown
